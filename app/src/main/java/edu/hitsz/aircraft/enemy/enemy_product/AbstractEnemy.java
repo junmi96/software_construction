@@ -1,7 +1,7 @@
 package edu.hitsz.aircraft.enemy.enemy_product;
 
 import edu.hitsz.aircraft.AbstractAircraft;
-import edu.hitsz.application.Main;
+import edu.hitsz.game.GameConfig;
 import edu.hitsz.item.BaseItem;
 import edu.hitsz.item.ItemFactory;
 import edu.hitsz.item.ItemObserver;
@@ -31,7 +31,7 @@ public abstract class AbstractEnemy extends AbstractAircraft implements ItemObse
             return;
         }
         super.forward();
-        if (locationY >= Main.WINDOW_HEIGHT) {
+        if (locationY >= GameConfig.GAME_HEIGHT) {
             vanish();
         }
     }

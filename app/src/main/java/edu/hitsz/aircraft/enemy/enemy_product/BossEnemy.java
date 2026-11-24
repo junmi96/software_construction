@@ -1,6 +1,6 @@
 package edu.hitsz.aircraft.enemy.enemy_product;
 
-import edu.hitsz.application.Main;
+import edu.hitsz.game.GameConfig;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.shoot.RingShootStrategy;
 
@@ -16,7 +16,7 @@ public class BossEnemy extends AbstractEnemy {
     @Override
     public void forward() {
         this.locationX += this.speedX;
-        if (this.locationX <= 0 || this.locationX >= Main.WINDOW_WIDTH) {
+        if (this.locationX <= 0 || this.locationX >= GameConfig.GAME_WIDTH) {
             this.speedX = -this.speedX;
         }
     }

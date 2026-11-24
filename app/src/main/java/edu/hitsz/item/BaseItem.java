@@ -2,7 +2,7 @@ package edu.hitsz.item;
 
 import edu.hitsz.aircraft.AbstractAircraft;
 import edu.hitsz.aircraft.HeroAircraft;
-import edu.hitsz.application.Main;
+import edu.hitsz.game.GameConfig;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.bullet.BaseBullet;
 
@@ -23,7 +23,7 @@ public abstract class BaseItem extends AbstractFlyingObject {
     @Override
     public void forward(){
         locationY += speedY;
-        if (locationY >= Main.WINDOW_HEIGHT){
+        if (locationY >= GameConfig.GAME_HEIGHT){
             vanish();
         }
     }

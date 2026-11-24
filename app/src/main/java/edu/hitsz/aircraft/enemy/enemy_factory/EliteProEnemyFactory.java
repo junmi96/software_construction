@@ -2,6 +2,7 @@ package edu.hitsz.aircraft.enemy.enemy_factory;
 
 import edu.hitsz.aircraft.enemy.enemy_product.AbstractEnemy;
 import edu.hitsz.aircraft.enemy.enemy_product.EliteProEnemy;
+import edu.hitsz.application.ImageManager;
 
 public class EliteProEnemyFactory extends EnemyFactory {
 
@@ -12,7 +13,7 @@ public class EliteProEnemyFactory extends EnemyFactory {
         int baseSpeedY = 10;
         int baseHp = 80;
         return new EliteProEnemy(
-                randomX(defaultEnemyWidth()),
+                randomX(ImageManager.ELITE_PRO_ENEMY_IMAGE.getWidth()),
                 randomY(),
                 scaleSpeedX(baseSpeedX),
                 scaleSpeedY(baseSpeedY),

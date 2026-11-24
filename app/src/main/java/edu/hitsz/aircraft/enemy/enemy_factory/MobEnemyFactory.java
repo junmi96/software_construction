@@ -2,6 +2,7 @@ package edu.hitsz.aircraft.enemy.enemy_factory;
 
 import edu.hitsz.aircraft.enemy.enemy_product.AbstractEnemy;
 import edu.hitsz.aircraft.enemy.enemy_product.MobEnemy;
+import edu.hitsz.application.ImageManager;
 
 public class MobEnemyFactory extends EnemyFactory {
 
@@ -12,7 +13,7 @@ public class MobEnemyFactory extends EnemyFactory {
         int baseSpeedY = 10;
         int baseHp = 30;
         return new MobEnemy(
-                randomX(defaultEnemyWidth()),
+                randomX(ImageManager.MOB_ENEMY_IMAGE.getWidth()),
                 randomY(),
                 scaleSpeedX(baseSpeedX),
                 scaleSpeedY(baseSpeedY),

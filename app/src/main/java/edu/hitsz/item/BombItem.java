@@ -1,11 +1,10 @@
 package edu.hitsz.item;
 
+import java.util.List;
+
 import edu.hitsz.aircraft.AbstractAircraft;
 import edu.hitsz.aircraft.HeroAircraft;
-import edu.hitsz.application.AudioManager;
 import edu.hitsz.bullet.BaseBullet;
-
-import java.util.List;
 
 public class BombItem extends BaseItem {
 
@@ -16,21 +15,24 @@ public class BombItem extends BaseItem {
     }
 
     @Override
-    public void activate(HeroAircraft hero, List<AbstractAircraft> enemyAircrafts, List<BaseBullet> enemyBullets) {
-        AudioManager.getInstance().playBomb();
+    public void activate(HeroAircraft hero,
+                         List<AbstractAircraft> enemyAircrafts,
+                         List<BaseBullet> enemyBullets) {
         registerObservers(enemyAircrafts, enemyBullets);
         itemSubject.notifyBombObservers();
     }
 
-    private void registerObservers(List<AbstractAircraft> enemyAircrafts, List<BaseBullet> enemyBullets) {
-        for (AbstractAircraft enemyAircraft : enemyAircrafts) {
-            if (enemyAircraft instanceof ItemObserver && !enemyAircraft.notValid()) {
-                itemSubject.addObserver((ItemObserver) enemyAircraft);
+    private void registerObservers(List<AbstractAircraft> enemyAircrafts,
+                                   List<BaseBullet> enemyBullets) {
+        for (AbstractAircraft enemy : enemyAircrafts) {
+            if (enemy instanceof ItemObserver && !enemy.notValid()) {
+                itemSubject.addObserver((ItemObserver) enemy);
             }
         }
-        for (BaseBullet enemyBullet : enemyBullets) {
-            if (enemyBullet instanceof ItemObserver && !enemyBullet.notValid()) {
-                itemSubject.addObserver((ItemObserver) enemyBullet);
+
+        for (BaseBullet bullet : enemyBullets) {
+            if (bullet instanceof ItemObserver && !bullet.notValid()) {
+                itemSubject.addObserver((ItemObserver) bullet);
             }
         }
     }

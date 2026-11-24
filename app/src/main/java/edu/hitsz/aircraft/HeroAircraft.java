@@ -1,7 +1,7 @@
 package edu.hitsz.aircraft;
 
 import edu.hitsz.application.ImageManager;
-import edu.hitsz.application.Main;
+import edu.hitsz.game.GameConfig;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.shoot.DirectShootStrategy;
 import edu.hitsz.shoot.RingShootStrategy;
@@ -40,7 +40,7 @@ public class HeroAircraft extends AbstractAircraft {
         if(heroAircraft==null){
             synchronized (HeroAircraft.class){
                 if(heroAircraft==null){
-                    heroAircraft=new HeroAircraft(Main.WINDOW_WIDTH / 2,Main.WINDOW_HEIGHT - ImageManager.HERO_IMAGE.getHeight(),0,0,100);
+                    heroAircraft=new HeroAircraft(GameConfig.GAME_WIDTH / 2,GameConfig.GAME_HEIGHT - ImageManager.HERO_IMAGE.getHeight(),0,0,100);
                 }
             }
         }

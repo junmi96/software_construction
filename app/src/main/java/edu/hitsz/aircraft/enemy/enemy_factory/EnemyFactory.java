@@ -1,8 +1,7 @@
 package edu.hitsz.aircraft.enemy.enemy_factory;
 
 import edu.hitsz.aircraft.enemy.enemy_product.AbstractEnemy;
-import edu.hitsz.application.ImageManager;
-import edu.hitsz.application.Main;
+import edu.hitsz.game.GameConfig;
 
 public abstract class EnemyFactory {
 
@@ -65,20 +64,18 @@ public abstract class EnemyFactory {
      * 随机生成横坐标，确保飞机完全出现在屏幕内。
      */
     protected int randomX(int imageWidth) {
-        return (int) (Math.random() * (Main.WINDOW_WIDTH - imageWidth));
+        int leftmostCenter = imageWidth / 2;
+        int availableSpace = GameConfig.GAME_WIDTH - imageWidth;
+        if (availableSpace <= 0) {
+            return GameConfig.GAME_WIDTH / 2;
+        }
+        return leftmostCenter + (int) (Math.random() * (availableSpace + 1));
     }
 
     /**
      * 敌机在屏幕上方小范围随机出现。
      */
     protected int randomY() {
-        return (int) (Math.random() * Main.WINDOW_HEIGHT * 0.05);
-    }
-
-    /**
-     * 统一提供普通敌机尺寸，便于复用横坐标边界计算。
-     */
-    protected int defaultEnemyWidth() {
-        return ImageManager.MOB_ENEMY_IMAGE.getWidth();
+        return (int) (Math.random() * GameConfig.GAME_HEIGHT * 0.05);
     }
 }
