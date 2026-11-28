@@ -1,6 +1,13 @@
 package edu.hitsz.game;
 
 import android.content.Context;
+import edu.hitsz.aircraft.AbstractAircraft;
+import edu.hitsz.aircraft.enemy.enemy_factory.BossEnemyFactory;
+import edu.hitsz.aircraft.enemy.enemy_factory.EnemyFactory;
+import edu.hitsz.aircraft.enemy.enemy_product.BossEnemy;
+import edu.hitsz.item.BaseItem;
+import edu.hitsz.item.BombItem;
+import edu.hitsz.aircraftwar2026.R;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -30,8 +37,21 @@ public abstract class BaseGame extends SurfaceView
     private final SurfaceHolder surfaceHolder;
     private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Rect backgroundBounds = new Rect();
-    private static final int ENEMY_SPAWN_INTERVAL = 24;
-    private static final int MAX_ENEMIES = 5;
+    private final Difficulty difficulty;
+    private final BossEnemyFactory bossFactory = new BossEnemyFactory();
+    private final List<BaseItem> items = new ArrayList<>();
+    private int nextBossScore;
+    private boolean bossActive, initialized, surfaceReady, foreground, gameOver;
+    private GameListener listener;
+
+    public interface GameListener {
+        void onSound(int resource);
+        void onBossChanged(boolean active);
+        void onGameOver(int finalScore);
+    }
+
+    public void setGameListener(GameListener listener) { this.listener = listener; }
+    private void sound(int resource) { if (listener != null) listener.onSound(resource); }
 
     private final MobEnemyFactory mobEnemyFactory = new MobEnemyFactory();
     private final EliteEnemyFactory eliteEnemyFactory = new EliteEnemyFactory();
@@ -61,13 +81,31 @@ public abstract class BaseGame extends SurfaceView
     private int score;
 
     protected BaseGame(Context context) {
+        this(context, Difficulty.EASY);
+    }
+
+    protected BaseGame(Context context, Difficulty difficulty) {
         super(context);
+        this.difficulty = difficulty;
+        nextBossScore = difficulty.bossScore;
+        for (EnemyFactory factory : new EnemyFactory[]{mobEnemyFactory, eliteEnemyFactory, bossFactory}) {
+            factory.setEnemyHpScale(difficulty.hpScale);
+            factory.setEnemySpeedXScale(difficulty.speedScale);
+            factory.setEnemySpeedYScale(difficulty.speedScale);
+        }
+        bossFactory.resetBossHpRule(200, 50);
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        surfaceReady = true;
+        if (initialized) {
+            startLoop();
+            return;
+        }
+        initialized = true;
         ImageManager.init(getResources());
 
         Bitmap hero = ImageManager.HERO_IMAGE;
@@ -93,9 +131,7 @@ public abstract class BaseGame extends SurfaceView
         backgroundOffset = 0;
         enemies.clear();
         enemySpawnTicks = 0;
-        running = true;
-        gameThread = new Thread(this, "aircraft-game");
-        gameThread.start();
+        startLoop();
     }
 
     @Override
@@ -106,26 +142,40 @@ public abstract class BaseGame extends SurfaceView
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        surfaceReady = false;
+        stopLoop();
+    }
+
+    public void resumeGame() {
+        foreground = true;
+        startLoop();
+    }
+
+    public void pauseGame() {
+        foreground = false;
+        stopLoop();
+        touchTarget = null;
+    }
+
+    private void startLoop() {
+        if (!surfaceReady || !foreground || gameOver || gameThread != null) return;
+        running = true;
+        gameThread = new Thread(this, "aircraft-game");
+        gameThread.start();
+    }
+
+    private void stopLoop() {
         running = false;
         Thread thread = gameThread;
-        if (thread == null) {
-            return;
-        }
-
+        if (thread == null) return;
         thread.interrupt();
         boolean interrupted = false;
         while (thread.isAlive()) {
-            try {
-                thread.join();
-            } catch (InterruptedException exception) {
-                interrupted = true;
-            }
+            try { thread.join(); }
+            catch (InterruptedException exception) { interrupted = true; }
         }
         gameThread = null;
-
-        if (interrupted) {
-            Thread.currentThread().interrupt();
-        }
+        if (interrupted) Thread.currentThread().interrupt();
     }
 
     @Override
@@ -162,7 +212,13 @@ public abstract class BaseGame extends SurfaceView
                 updateEnemies();
                 updateHeroBullets();
                 updateEnemyBullets();
+                for (BaseItem item : items) item.forward();
                 checkCollisions();
+                updateBossMusic();
+                if (heroAircraft.notValid() && !gameOver) {
+                    gameOver = true;
+                    if (listener != null) listener.onGameOver(score);
+                }
             }
             Canvas canvas = surfaceHolder.lockCanvas();
             if (canvas != null) {
@@ -172,11 +228,6 @@ public abstract class BaseGame extends SurfaceView
                     surfaceHolder.unlockCanvasAndPost(canvas);
                 }
                 if (heroAircraft.notValid()) {
-                    int finalScore = score;
-                    OnGameOverListener listener = onGameOverListener;
-                    if (listener != null) {
-                        post(() -> listener.onGameOver(finalScore));
-                    }
                     return;
                 }
             }
@@ -208,10 +259,18 @@ public abstract class BaseGame extends SurfaceView
     }
 
     private void updateEnemies() {
+        if (score >= nextBossScore && !bossActive) {
+            AbstractEnemy boss = bossFactory.createEnemy();
+            boss.setLocation(GAME_WIDTH / 2.0, boss.getHeight() / 2.0 + 24);
+            enemies.add(boss);
+            nextBossScore = score + difficulty.bossScore;
+            bossActive = true;
+            if (listener != null) listener.onBossChanged(true);
+        }
         enemySpawnTicks++;
-        if (enemySpawnTicks >= ENEMY_SPAWN_INTERVAL) {
+        if (enemySpawnTicks >= difficulty.spawnInterval) {
             enemySpawnTicks = 0;
-            if (enemies.size() < MAX_ENEMIES) {
+            if (enemies.size() < difficulty.maxEnemies) {
                 spawnedEnemies++;
                 enemies.add(spawnedEnemies % 3 == 0
                         ? eliteEnemyFactory.createEnemy()
@@ -233,6 +292,11 @@ public abstract class BaseGame extends SurfaceView
 
         drawBackground(canvas);
         drawEnemies(canvas);
+        for (BaseItem item : items) {
+            Bitmap image = item.getImage();
+            canvas.drawBitmap(image, item.getLocationX() - image.getWidth() / 2f,
+                    item.getLocationY() - image.getHeight() / 2f, paint);
+        }
         drawBullets(canvas, heroBullets);
         drawBullets(canvas, enemyBullets);
 
@@ -279,6 +343,7 @@ public abstract class BaseGame extends SurfaceView
     }
 
     private void updateHeroBullets() {
+        heroAircraft.updateFireMode();
         for (BaseBullet bullet : heroBullets) {
             bullet.forward();
         }
@@ -308,6 +373,7 @@ public abstract class BaseGame extends SurfaceView
         for (BaseBullet bullet : enemyBullets) {
             if (!bullet.notValid() && !heroAircraft.notValid()
                     && heroAircraft.crash(bullet)) {
+                sound(R.raw.bullet_hit);
                 heroAircraft.decreaseHp(bullet.getPower());
                 bullet.vanish();
             }
@@ -323,11 +389,13 @@ public abstract class BaseGame extends SurfaceView
                     continue;
                 }
 
+                sound(R.raw.bullet_hit);
                 enemy.decreaseHp(bullet.getPower());
                 bullet.vanish();
 
                 if (enemy.notValid()) {
                     score += enemy.getScore();
+                    items.addAll(enemy.dropItems());
                 }
 
                 // 一颗普通子弹命中一架敌机后就停止检测。
@@ -343,9 +411,40 @@ public abstract class BaseGame extends SurfaceView
             }
         }
 
+        List<BaseItem> dropped = new ArrayList<>();
+        for (BaseItem item : items) {
+            if (item.notValid() || heroAircraft.notValid() || !heroAircraft.crash(item)) continue;
+            List<AbstractAircraft> targets = new ArrayList<>();
+            for (AbstractEnemy enemy : enemies) {
+                if (!enemy.notValid()) targets.add(enemy);
+            }
+            item.activate(heroAircraft, targets, enemyBullets);
+            item.vanish();
+            sound(item instanceof BombItem ? R.raw.bomb_explosion : R.raw.get_supply);
+            for (AbstractAircraft target : targets) {
+                if (target.notValid()) {
+                    AbstractEnemy enemy = (AbstractEnemy) target;
+                    score += enemy.getScore();
+                    dropped.addAll(enemy.dropItems());
+                }
+            }
+        }
+        items.removeIf(BaseItem::notValid);
+        items.addAll(dropped);
         heroBullets.removeIf(BaseBullet::notValid);
         enemyBullets.removeIf(BaseBullet::notValid);
         enemies.removeIf(AbstractEnemy::notValid);
+    }
+
+    private void updateBossMusic() {
+        boolean active = false;
+        for (AbstractEnemy enemy : enemies) {
+            if (enemy instanceof BossEnemy && !enemy.notValid()) active = true;
+        }
+        if (active != bossActive) {
+            bossActive = active;
+            if (listener != null) listener.onBossChanged(active);
+        }
     }
 
     private void drawBullets(Canvas canvas, List<BaseBullet> bullets) {
@@ -359,14 +458,5 @@ public abstract class BaseGame extends SurfaceView
             bulletBounds.set(left, top, left + width, top + height);
             canvas.drawBitmap(image, null, bulletBounds, paint);
         }
-    }
-    public interface OnGameOverListener {
-        void onGameOver(int finalScore);
-    }
-
-    private volatile OnGameOverListener onGameOverListener;
-
-    public void setOnGameOverListener(OnGameOverListener listener) {
-        onGameOverListener = listener;
     }
 }

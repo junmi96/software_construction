@@ -1,58 +1,32 @@
 package edu.hitsz.aircraftwar2026;
-
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.EditText;
-
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
-import edu.hitsz.game.EasyGame;
-import edu.hitsz.rank.Rank;
-import edu.hitsz.rank.SqliteRankDao;
-
+import androidx.appcompat.widget.SwitchCompat;
+import edu.hitsz.game.Difficulty;
 public class MainActivity extends AppCompatActivity {
-    private boolean resultShown;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        EasyGame game = new EasyGame(this);
-        game.setOnGameOverListener(this::showResult);
-        setContentView(game);
+    private boolean launching;
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        setContentView(R.layout.activity_main);
+        SwitchCompat music = findViewById(R.id.music_switch);
+        music.setChecked(getPreferences(MODE_PRIVATE).getBoolean("music", true));
+        music.setOnCheckedChangeListener((button, checked) ->
+                getPreferences(MODE_PRIVATE).edit().putBoolean("music", checked).apply());
+        findViewById(R.id.easy_button).setOnClickListener(v -> startGame(Difficulty.EASY, music.isChecked()));
+        findViewById(R.id.normal_button).setOnClickListener(v -> startGame(Difficulty.NORMAL, music.isChecked()));
+        findViewById(R.id.hard_button).setOnClickListener(v -> startGame(Difficulty.HARD, music.isChecked()));
     }
-
-    private void showResult(int finalScore) {
-        if (resultShown || isFinishing() || isDestroyed()) {
-            return;
-        }
-        resultShown = true;
-
-        EditText nameInput = new EditText(this);
-        nameInput.setSingleLine(true);
-        nameInput.setHint("玩家姓名");
-
-        new AlertDialog.Builder(this)
-                .setTitle("游戏结束 · " + finalScore + " 分")
-                .setView(nameInput)
-                .setCancelable(false)
-                .setNegativeButton("跳过", (dialog, which) -> openRanking())
-                .setPositiveButton("保存", (dialog, which) -> {
-                    String name = nameInput.getText().toString().trim();
-                    if (name.isEmpty()) {
-                        name = "玩家";
-                    }
-                    new SqliteRankDao(this).saveRank(
-                            RankActivity.MODE,
-                            new Rank(0, name, finalScore, System.currentTimeMillis()));
-                    openRanking();
-                })
-                .show();
+    private void startGame(Difficulty difficulty, boolean enabled) {
+        if (launching) return;
+        launching = true;
+        Intent intent = new Intent(this, GameActivity.class);
+        intent.putExtra(GameActivity.EXTRA_DIFFICULTY, difficulty.name());
+        intent.putExtra(GameActivity.EXTRA_MUSIC, enabled);
+        startActivity(intent);
     }
-
-    private void openRanking() {
-        startActivity(new Intent(this, RankActivity.class));
-        finish();
+    @Override protected void onResume() {
+        super.onResume();
+        launching = false;
     }
 }
