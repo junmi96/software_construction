@@ -1,6 +1,5 @@
 package edu.hitsz.rank;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,9 +54,8 @@ public class RankAdapter extends BaseAdapter {
         Rank rank = getItem(position);
         row.text.setText("第 " + rank.getRank() + " 名  "
                 + rank.getName() + "  " + rank.getScore() + " 分");
-        boolean first = rank.getRank() == 1;
-        convertView.setBackgroundColor(first ? 0xFFFFE082 : Color.TRANSPARENT);
-        row.text.setTextColor(first ? Color.BLACK : row.normalTextColor);
+        convertView.setBackgroundResource(R.drawable.rank_row);
+        row.text.setTextColor(row.normalTextColor);
         row.delete.setOnClickListener(v -> onDelete.delete(rank));
         return convertView;
     }

@@ -4,11 +4,14 @@ import android.content.Context;
 import edu.hitsz.aircraft.AbstractAircraft;
 import edu.hitsz.aircraft.enemy.enemy_factory.BossEnemyFactory;
 import edu.hitsz.aircraft.enemy.enemy_factory.EnemyFactory;
+import edu.hitsz.aircraft.enemy.enemy_factory.ElitePlusEnemyFactory;
+import edu.hitsz.aircraft.enemy.enemy_factory.EliteProEnemyFactory;
 import edu.hitsz.aircraft.enemy.enemy_product.BossEnemy;
 import edu.hitsz.item.BaseItem;
 import edu.hitsz.item.BombItem;
 import edu.hitsz.aircraftwar2026.R;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -37,6 +40,7 @@ public abstract class BaseGame extends SurfaceView
     private final SurfaceHolder surfaceHolder;
     private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Rect backgroundBounds = new Rect();
+    private Bitmap gameBackground;
     private final Difficulty difficulty;
     private final BossEnemyFactory bossFactory = new BossEnemyFactory();
     private final List<BaseItem> items = new ArrayList<>();
@@ -55,6 +59,10 @@ public abstract class BaseGame extends SurfaceView
 
     private final MobEnemyFactory mobEnemyFactory = new MobEnemyFactory();
     private final EliteEnemyFactory eliteEnemyFactory = new EliteEnemyFactory();
+    private final ElitePlusEnemyFactory elitePlusFactory = new ElitePlusEnemyFactory();
+    private final EliteProEnemyFactory eliteProFactory = new EliteProEnemyFactory();
+    private int difficultyTicks, difficultyStage;
+    private double spawnCycle, heroShootCycle, enemyShootCycle;
     private final List<AbstractEnemy> enemies = new ArrayList<>();
     private final Rect enemyBounds = new Rect();
 
@@ -88,12 +96,16 @@ public abstract class BaseGame extends SurfaceView
         super(context);
         this.difficulty = difficulty;
         nextBossScore = difficulty.bossScore;
-        for (EnemyFactory factory : new EnemyFactory[]{mobEnemyFactory, eliteEnemyFactory, bossFactory}) {
+        spawnCycle = difficulty.spawnInterval;
+        heroShootCycle = difficulty == Difficulty.HARD ? 18 : 20;
+        enemyShootCycle = difficulty == Difficulty.EASY ? 22 : difficulty == Difficulty.HARD ? 18 : 20;
+        for (EnemyFactory factory : new EnemyFactory[]{mobEnemyFactory, eliteEnemyFactory, elitePlusFactory, eliteProFactory, bossFactory}) {
             factory.setEnemyHpScale(difficulty.hpScale);
             factory.setEnemySpeedXScale(difficulty.speedScale);
             factory.setEnemySpeedYScale(difficulty.speedScale);
         }
-        bossFactory.resetBossHpRule(200, 50);
+        bossFactory.resetBossHpRule(difficulty == Difficulty.HARD ? 140 : 120,
+                difficulty == Difficulty.HARD ? 30 : 0);
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
     }
@@ -107,6 +119,11 @@ public abstract class BaseGame extends SurfaceView
         }
         initialized = true;
         ImageManager.init(getResources());
+        BitmapFactory.Options backgroundOptions = new BitmapFactory.Options();
+        backgroundOptions.inScaled = false;
+        int backgroundResource = difficulty == Difficulty.HARD ? R.drawable.bg5
+                : difficulty == Difficulty.NORMAL ? R.drawable.bg3 : R.drawable.bg;
+        gameBackground = BitmapFactory.decodeResource(getResources(), backgroundResource, backgroundOptions);
 
         Bitmap hero = ImageManager.HERO_IMAGE;
         int left = (GAME_WIDTH - hero.getWidth()) / 2;
@@ -209,6 +226,7 @@ public abstract class BaseGame extends SurfaceView
             if (!heroAircraft.notValid()) {
                 updateHeroPosition();
                 backgroundOffset = (backgroundOffset + BACKGROUND_STEP) % GAME_HEIGHT;
+                updateDifficulty();
                 updateEnemies();
                 updateHeroBullets();
                 updateEnemyBullets();
@@ -259,22 +277,24 @@ public abstract class BaseGame extends SurfaceView
     }
 
     private void updateEnemies() {
-        if (score >= nextBossScore && !bossActive) {
-            AbstractEnemy boss = bossFactory.createEnemy();
-            boss.setLocation(GAME_WIDTH / 2.0, boss.getHeight() / 2.0 + 24);
-            enemies.add(boss);
-            nextBossScore = score + difficulty.bossScore;
-            bossActive = true;
-            if (listener != null) listener.onBossChanged(true);
-        }
         enemySpawnTicks++;
-        if (enemySpawnTicks >= difficulty.spawnInterval) {
+        if (enemySpawnTicks >= spawnCycle && enemies.size() < difficulty.maxEnemies) {
             enemySpawnTicks = 0;
-            if (enemies.size() < difficulty.maxEnemies) {
-                spawnedEnemies++;
-                enemies.add(spawnedEnemies % 3 == 0
-                        ? eliteEnemyFactory.createEnemy()
-                        : mobEnemyFactory.createEnemy());
+            if (difficulty != Difficulty.EASY && score >= nextBossScore && !bossActive) {
+                AbstractEnemy boss = bossFactory.createEnemy();
+                boss.setLocation(GAME_WIDTH / 2.0, boss.getHeight() / 2.0 + 24);
+                enemies.add(boss);
+                nextBossScore += difficulty.bossScore;
+                bossActive = true;
+                if (listener != null) listener.onBossChanged(true);
+            } else {
+                double random = Math.random();
+                double mob = difficulty == Difficulty.EASY ? .70 : difficulty == Difficulty.NORMAL ? .58 : .50;
+                double elite = difficulty == Difficulty.EASY ? .90 : difficulty == Difficulty.NORMAL ? .82 : .72;
+                double plus = difficulty == Difficulty.EASY ? .98 : difficulty == Difficulty.NORMAL ? .94 : .88;
+                enemies.add(random < mob ? mobEnemyFactory.createEnemy()
+                        : random < elite ? eliteEnemyFactory.createEnemy()
+                        : random < plus ? elitePlusFactory.createEnemy() : eliteProFactory.createEnemy());
             }
         }
 
@@ -283,6 +303,27 @@ public abstract class BaseGame extends SurfaceView
         }
 
         enemies.removeIf(AbstractEnemy::notValid);
+    }
+
+    private void updateDifficulty() {
+        if (++difficultyTicks < 600) return;
+        difficultyTicks = 0;
+        int stage = ++difficultyStage;
+        if (difficulty == Difficulty.EASY) return;
+        boolean hard = difficulty == Difficulty.HARD;
+        spawnCycle = hard ? Math.max(8, 20 * Math.pow(.93, stage))
+                : Math.max(12, 22 * Math.pow(.95, stage));
+        if (hard) {
+            heroShootCycle = Math.max(10, 18 * Math.pow(.97, stage));
+            enemyShootCycle = Math.max(10, 18 * Math.pow(.95, stage));
+        }
+        double hp = 1 + (hard ? .12 : .08) * stage;
+        double speed = 1 + (hard ? .10 : .08) * stage;
+        for (EnemyFactory factory : new EnemyFactory[]{mobEnemyFactory, eliteEnemyFactory, elitePlusFactory, eliteProFactory, bossFactory}) {
+            factory.setEnemyHpScale(hp);
+            factory.setEnemySpeedXScale(speed);
+            factory.setEnemySpeedYScale(speed);
+        }
     }
 
     private void drawFrame(Canvas canvas) {
@@ -330,7 +371,7 @@ public abstract class BaseGame extends SurfaceView
         }
     }
     private void drawBackground(Canvas canvas) {
-        Bitmap background = ImageManager.BACKGROUND_IMAGE;
+        Bitmap background = gameBackground;
 
         // 上方的一张填补背景下移后露出的区域。
         backgroundBounds.set(0, backgroundOffset - GAME_HEIGHT,
@@ -349,7 +390,7 @@ public abstract class BaseGame extends SurfaceView
         }
 
         heroShootTicks++;
-        if (heroShootTicks >= HERO_SHOOT_INTERVAL) {
+        if (heroShootTicks >= heroShootCycle) {
             heroShootTicks = 0;
             heroBullets.addAll(heroAircraft.shoot());
         }
@@ -361,7 +402,7 @@ public abstract class BaseGame extends SurfaceView
         }
 
         enemyShootTicks++;
-        if (enemyShootTicks >= ENEMY_SHOOT_INTERVAL) {
+        if (enemyShootTicks >= enemyShootCycle) {
             enemyShootTicks = 0;
             for (AbstractEnemy enemy : enemies) {
                 enemyBullets.addAll(enemy.shoot());

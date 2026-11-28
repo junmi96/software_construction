@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="aw_navy">#071C38</color>
+    <color name="aw_panel">#CC102F59</color>
+    <color name="aw_cyan">#19C9F3</color>
+    <color name="aw_gold">#F4C76A</color>
+    <color name="aw_white">#F5FAFF</color>
+    <color name="aw_muted">#C8DCEB</color>
+    <color name="aw_danger">#F06464</color>
 </resources>

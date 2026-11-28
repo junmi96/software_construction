@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/aw_navy">
+
+    <ImageView android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/menu_bg" android:scaleType="centerCrop" android:contentDescription="@null" />
+    <View android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="#66051122" />
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:gravity="center_horizontal"
+        android:paddingStart="32dp" android:paddingEnd="32dp">
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="88dp" android:text="飞机大战" style="@style/AW.Title" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" android:gravity="center" android:text="AIRCRAFT WAR"
+            android:fontFamily="sans-serif-condensed" android:letterSpacing="0.18"
+            android:textSize="14sp" android:textColor="@color/aw_cyan" />
+
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+        <Button android:id="@+id/easy_button" style="@style/AW.DifficultyButton" android:text="简单模式" />
+        <Button android:id="@+id/normal_button" style="@style/AW.DifficultyButton"
+            android:text="普通模式" android:layout_marginTop="12dp" />
+        <Button android:id="@+id/hard_button" style="@style/AW.DifficultyButton"
+            android:background="@drawable/button_hard" android:text="困难模式" android:layout_marginTop="12dp" />
+        <Button android:id="@+id/rank_button" style="@style/AW.DifficultyButton"
+            android:layout_marginTop="12dp" android:text="排行榜" android:drawableStart="@drawable/ic_trophy"
+            android:drawablePadding="10dp" />
+
+        <androidx.appcompat.widget.SwitchCompat android:id="@+id/music_switch"
+            android:layout_width="match_parent" android:layout_height="54dp"
+            android:text="背景音乐与音效" android:drawableStart="@drawable/ic_music" android:textSize="15sp"
+            android:textColor="@color/aw_white" android:layout_marginTop="14dp"
+            android:checked="true" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="滑动手指控制战机 · 自动射击" android:textColor="@color/aw_muted"
+            android:textSize="12sp" android:gravity="center" android:layout_marginTop="4dp" />
+
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+        <Space android:layout_width="1dp" android:layout_height="68dp" />
+    </LinearLayout>
+</FrameLayout>

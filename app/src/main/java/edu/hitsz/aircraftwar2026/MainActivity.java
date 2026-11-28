@@ -8,7 +8,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean launching;
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_ui_sample);
         findViewById(R.id.rank_button).setOnClickListener(v -> {
             if (launching) return;
             launching = true;
@@ -16,8 +16,14 @@ public class MainActivity extends AppCompatActivity {
         });
         SwitchCompat music = findViewById(R.id.music_switch);
         music.setChecked(getPreferences(MODE_PRIVATE).getBoolean("music", true));
+        music.setCompoundDrawablesWithIntrinsicBounds(
+                music.isChecked() ? R.drawable.ic_music : R.drawable.ic_music_off, 0, 0, 0);
         music.setOnCheckedChangeListener((button, checked) ->
-                getPreferences(MODE_PRIVATE).edit().putBoolean("music", checked).apply());
+                {
+                    getPreferences(MODE_PRIVATE).edit().putBoolean("music", checked).apply();
+                    button.setCompoundDrawablesWithIntrinsicBounds(
+                            checked ? R.drawable.ic_music : R.drawable.ic_music_off, 0, 0, 0);
+                });
         findViewById(R.id.easy_button).setOnClickListener(v -> startGame(Difficulty.EASY, music.isChecked()));
         findViewById(R.id.normal_button).setOnClickListener(v -> startGame(Difficulty.NORMAL, music.isChecked()));
         findViewById(R.id.hard_button).setOnClickListener(v -> startGame(Difficulty.HARD, music.isChecked()));

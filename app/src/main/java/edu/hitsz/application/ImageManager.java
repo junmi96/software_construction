@@ -56,6 +56,7 @@ public final class ImageManager {
         options.inScaled = false;
 
         // 实验二默认进入简单模式，使用 bg.jpg。
+        // Keep the original AircraftWar base-game background.
         BACKGROUND_IMAGE = load(resources, R.drawable.bg, options);
 
         HERO_IMAGE = load(resources, R.drawable.hero, options);
