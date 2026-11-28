@@ -172,6 +172,11 @@ public abstract class BaseGame extends SurfaceView
                     surfaceHolder.unlockCanvasAndPost(canvas);
                 }
                 if (heroAircraft.notValid()) {
+                    int finalScore = score;
+                    OnGameOverListener listener = onGameOverListener;
+                    if (listener != null) {
+                        post(() -> listener.onGameOver(finalScore));
+                    }
                     return;
                 }
             }
@@ -354,5 +359,14 @@ public abstract class BaseGame extends SurfaceView
             bulletBounds.set(left, top, left + width, top + height);
             canvas.drawBitmap(image, null, bulletBounds, paint);
         }
+    }
+    public interface OnGameOverListener {
+        void onGameOver(int finalScore);
+    }
+
+    private volatile OnGameOverListener onGameOverListener;
+
+    public void setOnGameOverListener(OnGameOverListener listener) {
+        onGameOverListener = listener;
     }
 }
