@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">AircraftWar2026</string>
+    <string name="game_title">飞机大战</string>
+    <string name="choose_difficulty">选择难度，开始出击</string>
+    <string name="easy">简单</string>
+    <string name="normal">中等</string>
+    <string name="hard">困难</string>
+    <string name="music_enabled">背景音乐与音效</string>
+    <string name="game_hint">拖动飞机躲避敌人，拾取道具增强火力；返回此页面可重新选择难度</string>
+</resources>
