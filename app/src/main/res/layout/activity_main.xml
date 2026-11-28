@@ -9,6 +9,8 @@
  <Button android:id="@+id/easy_button" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/easy" />
  <Button android:id="@+id/normal_button" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/normal" android:layout_marginTop="12dp" />
  <Button android:id="@+id/hard_button" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/hard" android:layout_marginTop="12dp" />
+ <Button android:id="@+id/rank_button" android:layout_width="match_parent" android:layout_height="56dp"
+ android:layout_marginTop="12dp" android:text="@string/rank_menu" />
  <androidx.appcompat.widget.SwitchCompat android:id="@+id/music_switch" android:layout_width="match_parent" android:layout_height="56dp"
  android:text="@string/music_enabled" android:textColor="#FFFFFF" android:layout_marginTop="24dp" />
  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/game_hint"

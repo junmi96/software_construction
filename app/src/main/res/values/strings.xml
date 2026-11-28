@@ -8,4 +8,6 @@
     <string name="music_enabled">背景音乐与音效</string>
     <string name="game_hint">拖动飞机躲避敌人，拾取道具增强火力；返回此页面可重新选择难度</string>
     <string name="rank_title">%1$s模式排行榜</string>
+    <string name="rank_menu">排行榜</string>
+    <string name="rank_empty">这个难度暂无成绩</string>
 </resources>

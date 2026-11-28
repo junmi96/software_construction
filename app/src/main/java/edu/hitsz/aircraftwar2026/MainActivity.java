@@ -9,6 +9,11 @@ public class MainActivity extends AppCompatActivity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
+        findViewById(R.id.rank_button).setOnClickListener(v -> {
+            if (launching) return;
+            launching = true;
+            startActivity(new Intent(this, RankActivity.class));
+        });
         SwitchCompat music = findViewById(R.id.music_switch);
         music.setChecked(getPreferences(MODE_PRIVATE).getBoolean("music", true));
         music.setOnCheckedChangeListener((button, checked) ->
